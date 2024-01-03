@@ -5,7 +5,7 @@ namespace dotnet_rpg.Data
     {
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
-            
+            ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
         public DbSet<Character> Characters => Set<Character>();
     }

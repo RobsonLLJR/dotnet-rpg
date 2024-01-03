@@ -6,13 +6,12 @@ namespace dotnet_rpg.Controllers
     public class CharacterController : ControllerBase
     {
         private readonly ICharacterService _characterService;
-
+        
         public CharacterController(ICharacterService characterService)
         {
             _characterService = characterService;
         }
         [HttpGet("GetAll")]
-        // [Route("GetAll")]
         public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Get()
         {
             return Ok(await _characterService.GetAllCharacters());

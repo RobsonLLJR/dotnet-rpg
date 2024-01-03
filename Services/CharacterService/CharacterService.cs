@@ -3,11 +3,6 @@ namespace dotnet_rpg.Services.CharacterService
 {
     public class CharacterService : ICharacterService
     {
-        private static List<Character> characters = new()
-        {
-            new Character(),
-            new Character { Id = 1, Name = "Sam" }
-        };
         private readonly IMapper _mapper;
         private readonly DataContext _context;
         public CharacterService(IMapper mapper, DataContext context)
@@ -19,24 +14,24 @@ namespace dotnet_rpg.Services.CharacterService
         {
             var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
             var character = _mapper.Map<Character>(newCharacter);
-            if(characters.Any())
-                character.Id = characters.Max(x => x.Id) + 1;
-            characters.Add(character);
-            serviceResponse.Data = characters.Select(x => _mapper.Map<GetCharacterDto>(x)).ToList();
+            await _context.Characters.AddAsync(character);
+            await _context.SaveChangesAsync();
+            _context.ChangeTracker.Clear();
+            List<Character> objetosDominio = await _context.Characters.ToListAsync();
+            serviceResponse.Data = objetosDominio.Select(x => _mapper.Map<GetCharacterDto>(x)).ToList();
             return serviceResponse;
         }
-
         public async Task<ServiceResponse<List<GetCharacterDto>>> DeleteCharacters(int id)
         {
             var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
             try
             {
-                var character = characters.FirstOrDefault(x => x.Id == id);
-                if(character is null)
-                    throw new Exception($"Character with Id '{id}' not found");
-
-                characters.Remove(character);
-                serviceResponse.Data = characters.Select(x=> _mapper.Map<GetCharacterDto>(x)).ToList();
+                var objetoDominio = await _context.Characters.FindAsync(id) ?? throw new Exception($"Character with Id '{id}' not found");
+                _context.Characters.Remove(objetoDominio);
+                await _context.SaveChangesAsync();
+                _context.ChangeTracker.Clear();
+                List<Character> objetosDominio = await _context.Characters.ToListAsync();
+                serviceResponse.Data = objetosDominio.Select(x=> _mapper.Map<GetCharacterDto>(x)).ToList();
             }
             catch (Exception ex)
             {
@@ -46,7 +41,6 @@ namespace dotnet_rpg.Services.CharacterService
             return serviceResponse;
 
         }
-
         public async Task<ServiceResponse<List<GetCharacterDto>>> GetAllCharacters()
         {
             var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
@@ -54,32 +48,37 @@ namespace dotnet_rpg.Services.CharacterService
             serviceResponse.Data = objectsDominio.Select(x => _mapper.Map<GetCharacterDto>(x)).ToList();
             return serviceResponse;
         }
-
         public async Task<ServiceResponse<GetCharacterDto>> GetCharacterById(int id)
         {
             var serviceResponse = new ServiceResponse<GetCharacterDto>();
-            var character = characters.FirstOrDefault(x => x.Id.Equals(id));
+            Character? character = await _context.Characters.FirstOrDefaultAsync(x=>x.Id.Equals(id));
+            if(character is null)
+            {
+                serviceResponse.Success = false;
+                serviceResponse.Message = "Character não encontrado.";
+                return serviceResponse;
+            }
             serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
             return serviceResponse;
         }
-
         public async Task<ServiceResponse<GetCharacterDto>> UpdateCharacter(UpdateCharacterDto updateCharacterDto)
         {
             var serviceResponse = new ServiceResponse<GetCharacterDto>();
             try
             {
-                var character = characters.FirstOrDefault(x => x.Id == updateCharacterDto.Id);
-                if(character is null)
-                    throw new Exception($"Character with Id '{updateCharacterDto.Id}' not found");
+                var objetoDominio = await _context.Characters.FindAsync(updateCharacterDto.Id) ?? throw new Exception($"Character with Id '{updateCharacterDto.Id}' not found");
 
-                character.Name = updateCharacterDto.Name;
-                character.HitPoints = updateCharacterDto.HitPoints;
-                character.Strength = updateCharacterDto.Strength;
-                character.Defense = updateCharacterDto.Defense;
-                character.Intelligence = updateCharacterDto.Intelligence;
-                character.Class = updateCharacterDto.Class;
+                objetoDominio.Name = updateCharacterDto.Name;
+                objetoDominio.HitPoints = updateCharacterDto.HitPoints;
+                objetoDominio.Strength = updateCharacterDto.Strength;
+                objetoDominio.Defense = updateCharacterDto.Defense;
+                objetoDominio.Intelligence = updateCharacterDto.Intelligence;
+                objetoDominio.Class = updateCharacterDto.Class;
+                _context.Update(objetoDominio);
+                await _context.SaveChangesAsync();
+                // _context.ChangeTracker.Clear();
 
-                serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
+                serviceResponse.Data = _mapper.Map<GetCharacterDto>(objetoDominio);
             }
             catch (Exception ex)
             {
