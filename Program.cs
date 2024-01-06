@@ -17,6 +17,8 @@ builder.Services.AddScoped<ICharacterService, CharacterService>();
 
 var app = builder.Build();
 
+app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
