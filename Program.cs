@@ -5,6 +5,7 @@ global using Microsoft.EntityFrameworkCore;
 global using dotnet_rpg.Data;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+
 var connectionsString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<DataContext>(options =>
  options.UseSqlServer("Server=DESKTOP-5N9SF6F\\SQLEXPRESS;Database=dotnet-rpg;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;Encrypt=True"));
